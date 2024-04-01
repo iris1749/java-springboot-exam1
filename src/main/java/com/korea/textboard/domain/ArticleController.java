@@ -1,637 +1,29 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package com.korea.textboard.domain;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.korea.textboard.base.CommonUtil;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
-// Model - Controller - View
 @Controller
 public class ArticleController { // Model + Controller
 
     CommonUtil commonUtil = new CommonUtil();
-    ArticleView articleView = new ArticleView();
     ArticleRepository articleRepository = new ArticleRepository();
-
-    Scanner scan = commonUtil.getScanner();
-    int WRONG_VALUE = -1;
-
 
     @RequestMapping("/search")
     @ResponseBody
     public ArrayList<Article> search(@RequestParam(value="keyword", defaultValue = "") String keyword) {
-        ArrayList<Article> searchedList = articleRepository.findArticleByKeyword(keyword);
 
+        ArrayList<Article> searchedList = articleRepository.findArticleByKeyword(keyword);
         return searchedList;
     }
 
     @RequestMapping("/detail")
-    @ResponseBody
-    public String detail(@RequestParam("articleId") int articleId) {
+    public String detail(@RequestParam("articleId") int articleId, Model model) {
+
         Article article = articleRepository.findArticleById(articleId);
 
         if (article == null) {
@@ -639,28 +31,22 @@ public class ArticleController { // Model + Controller
         }
 
         article.increaseHit();
-        String jsonString = "";
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            jsonString = objectMapper.writeValueAsString(article);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return jsonString;
+
+        model.addAttribute("article", article);
+        return "detail";
     }
 
-    @RequestMapping("/delete")
-    @ResponseBody
-    public String delete(@RequestParam("articleId") int inputId) {
+    @RequestMapping("/delete/{articleId}")
+    public String delete(@PathVariable("articleId") int articleId) {
 
-        Article article = articleRepository.findArticleById(inputId);
+        Article article = articleRepository.findArticleById(articleId);
 
         if (article == null) {
             return "없는 게시물입니다.";
         }
 
         articleRepository.deleteArticle(article);
-        return "%d번 게시물이 삭제되었습니다.".formatted(inputId);
+        return "redirect:/list";
     }
 
     @RequestMapping("/update")
@@ -669,63 +55,44 @@ public class ArticleController { // Model + Controller
                          @RequestParam("newTitle") String newTitle,
                          @RequestParam("newBody") String newBody
     ) {
-//        System.out.print("수정할 게시물 번호를 입력해주세요 : ");
-//
-//        int inputId = getParamAsInt(scan.nextLine(), WRONG_VALUE);
-//        if(inputId == WRONG_VALUE) {
-//            return;
-//        }
 
         Article article = articleRepository.findArticleById(inputId);
 
         if (article == null) {
-//            System.out.println("없는 게시물입니다.");
             return "없는 게시물입니다.";
         }
-
-//        System.out.print("새로운 제목을 입력해주세요 : ");
-//        String newTitle = scan.nextLine();
-//
-//        System.out.print("새로운 내용을 입력해주세요 : ");
-//        String newBody = scan.nextLine();
 
         articleRepository.updateArticle(article, newTitle, newBody);
         return "%d번 게시물이 수정되었습니다.".formatted(inputId);
     }
 
-
     @RequestMapping("/list")
-    @ResponseBody
-    public ArrayList<Article> list() {
-        ArrayList<Article> articleList = articleRepository.findAll();
+    public String list(Model model) {
 
-        return articleList;
-//        articleView.printArticleList(articleList); // 전체 출력 -> 전체 저장소 넘기기
+        ArrayList<Article> articleList = articleRepository.findAll();
+        model.addAttribute("articleList", articleList);
+
+        return "list";
     }
 
-    @RequestMapping("/add")
-    @ResponseBody
+    // 실제 데이터 저장 처리 부분
+    @PostMapping("/add")
     public String add(@RequestParam("title") String title,
-                      @RequestParam("body") String body) {
-
-//        System.out.print("게시물 제목을 입력해주세요 : ");
-//        String title = scan.nextLine();
-//
-//        System.out.print("게시물 내용을 입력해주세요 : ");
-//        String body = scan.nextLine();
+                      @RequestParam("body") String body,
+                      Model model) {
 
         articleRepository.saveArticle(title, body);
-//        System.out.println("게시물이 등록되었습니다.");
-        return "게시물이 등록되었습니다.";
+
+        // 문제 원인 : add 요청의 결과 화면을 list로 보여주고 있다.
+        // 문제 해결 : add url을 list로 바꾸면 된다.
+        // controller에서 주소를 바꾸는 법 : redirect
+        return "redirect:/list"; // 브라우저의 주소가 /list로 바뀜
 
     }
 
-    private int getParamAsInt(String param, int defaultValue) {
-        try {
-            return Integer.parseInt(param);
-        } catch (NumberFormatException e) {
-            System.out.println("숫자를 입력해주세요.");
-            return defaultValue;
-        }
+    // 입력 화면 보여주기
+    @GetMapping("/add")
+    public String form() {
+        return "form";
     }
 }

@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
-$END$
+<h1>상세보기</h1>
+
+<div>
+    <div th:text="${article.title}"></div>
+    <div th:text="${article.body}"></div>
+</div>
+<a th:href="@{|/delete/${article.id}|}">삭제</a>
 </body>
 </html>
