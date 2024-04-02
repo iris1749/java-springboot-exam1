@@ -14,11 +14,13 @@ public class ArticleController { // Model + Controller
     ArticleRepository articleRepository = new ArticleRepository();
 
     @RequestMapping("/search")
-    @ResponseBody
-    public ArrayList<Article> search(@RequestParam(value="keyword", defaultValue = "") String keyword) {
+    public String search(@RequestParam(value="keyword", defaultValue = "") String keyword,
+                         Model model) {
 
         ArrayList<Article> searchedList = articleRepository.findArticleByKeyword(keyword);
-        return searchedList;
+        model.addAttribute("articleList", searchedList);
+
+        return "list";
     }
 
     @RequestMapping("/detail")
