@@ -11,7 +11,8 @@ import java.util.ArrayList;
 public class ArticleController { // Model + Controller
 
     CommonUtil commonUtil = new CommonUtil();
-    ArticleRepository articleRepository = new ArticleRepository();
+
+    Repository articleRepository = new ArticleMySQLRepository();
 
     @RequestMapping("/search")
     public String search(@RequestParam(value="keyword", defaultValue = "") String keyword,
@@ -23,8 +24,8 @@ public class ArticleController { // Model + Controller
         return "list";
     }
 
-    @RequestMapping("/detail")
-    public String detail(@RequestParam("articleId") int articleId, Model model) {
+    @RequestMapping("/detail/{articleId}")
+    public String detail(@PathVariable("articleId") int articleId, Model model) {
 
         Article article = articleRepository.findArticleById(articleId);
 
@@ -48,11 +49,12 @@ public class ArticleController { // Model + Controller
         }
 
         articleRepository.deleteArticle(article);
+
         return "redirect:/list";
     }
 
     @GetMapping("/update/{articleId}")
-    public String update(@PathVariable("articleId") int articleId, Model model) {
+    public String updateForm(@PathVariable("articleId") int articleId, Model model) {
 
         Article article = articleRepository.findArticleById(articleId);
 
@@ -61,9 +63,8 @@ public class ArticleController { // Model + Controller
         }
 
         model.addAttribute("article", article);
-        return "update";
+        return "updateForm";
     }
-
     @PostMapping("/update/{articleId}")
     public String update(@PathVariable("articleId") int articleId,
                          @RequestParam("title") String title,
@@ -78,7 +79,7 @@ public class ArticleController { // Model + Controller
 
         articleRepository.updateArticle(article, title, body);
 
-        return "redirect:/detail?articleId=%d".formatted(articleId);
+        return "redirect:/detail/%d".formatted(articleId);
     }
 
     @RequestMapping("/list")
@@ -88,12 +89,6 @@ public class ArticleController { // Model + Controller
         model.addAttribute("articleList", articleList);
 
         return "list";
-    }
-
-    // 입력 화면 보여주기
-    @GetMapping("/add")
-    public String form() {
-        return "form";
     }
 
     // 실제 데이터 저장 처리 부분
@@ -110,5 +105,12 @@ public class ArticleController { // Model + Controller
         return "redirect:/list"; // 브라우저의 주소가 /list로 바뀜
 
     }
+
+    // 입력 화면 보여주기
+    @GetMapping("/add")
+    public String form() {
+        return "form";
+    }
+
 
 }
